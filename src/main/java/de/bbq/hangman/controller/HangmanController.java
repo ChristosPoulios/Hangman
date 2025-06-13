@@ -3,6 +3,7 @@ package de.bbq.hangman.controller;
 import de.bbq.hangman.model.HangmanModel;
 import de.bbq.hangman.model.WordProvider;
 import de.bbq.hangman.view.HangmanView;
+import de.bbq.hangman.model.ComputerGuesser;
 
 import java.util.Scanner;
 
@@ -16,8 +17,10 @@ import java.util.Scanner;
 public class HangmanController {
     private final HangmanModel model;
     private final HangmanView view;
+    private final ComputerGuesser computerGuesser;
     private final Scanner scanner;
     private final WordProvider wordProvider;
+    private boolean isComputerMode;
 
     /**
      * Constructs a HangmanController with the specified model and view.
@@ -32,10 +35,17 @@ public class HangmanController {
         }
         this.model = model;
         this.view = view;
+        this.computerGuesser = new ComputerGuesser();
         this.scanner = new Scanner(System.in);
         this.wordProvider = new WordProvider();
     }
 
+    /**
+     * Prompts the user to choose a game mode and returns the word to guess.
+     * Handles both computer guessing mode and user input mode.
+     *
+     * @return The word to guess in the game
+     */
     private String getGameWord() {
         while (true) {
             view.promptForMode();
@@ -43,9 +53,10 @@ public class HangmanController {
 
             switch (input) {
                 case "1":
-                    view.promptForWord();
-                    return scanner.nextLine();
+                    isComputerMode = true;
+                    return startComputerGuessMode();
                 case "2":
+                    isComputerMode = false;
                     return wordProvider.getRandomWord();
                 default:
                     view.showInvalidMode();
@@ -75,6 +86,17 @@ public class HangmanController {
     private void playOneGame() {
         view.showWelcome();
         String word = getGameWord();
+
+        if (isComputerMode) {
+            if (model.isGameWon()) {
+                view.showComputerWon();
+            } else if (model.isGameOver()) {
+                view.showGameLost(model.getWordToGuess());
+            }
+            return;
+        }
+
+        // Normal game mode
         model.initializeGame(word);
 
         while (!model.isGameOver() && !model.isGameWon()) {
@@ -137,4 +159,60 @@ public class HangmanController {
         String answer = scanner.nextLine().toLowerCase();
         return answer.startsWith("j");
     }
+
+    /**
+     * Starts the computer guess mode where the computer tries to guess a user's word.
+     *
+     * @return The word that was guessed
+     */
+    private String startComputerGuessMode() {
+        view.promptForWord();
+        String userWord = scanner.nextLine();
+
+        computerGuesser.initializeGuesser();
+        model.initializeGame(userWord);
+
+        view.showComputerStartsGuessing();
+
+        while (!model.isGameOver() && !model.isGameWon() && computerGuesser.hasMoreLetters()) {
+            view.showGameState(
+                    model.getCurrentDisplay(),
+                    model.getRemainingLives(),
+                    model.getGuessedLetters()
+            );
+
+            char computerGuess = computerGuesser.getNextLetterGuess();
+            view.showComputerLetterGuess(computerGuess);
+
+            if (model.hasBeenGuessed(computerGuess)) {
+                continue;
+            }
+
+            if (model.guessLetter(computerGuess)) {
+                view.showCorrectGuess();
+            } else {
+                view.showWrongGuess();
+            }
+
+            computerGuesser.updatePossibleWords(
+                    model.getCurrentDisplay(),
+                    model.getGuessedLetters()
+            );
+
+            try {
+                Thread.sleep(1500);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+
+        if (!model.isGameWon() && !model.isGameOver() && computerGuesser.hasMoreLetters()) {
+            String wordGuess = computerGuesser.getWordGuess(model.getCurrentDisplay());
+            view.showComputerWordGuess(wordGuess);
+            model.guessWord(wordGuess);
+        }
+
+        return userWord;
+    }
+
 }

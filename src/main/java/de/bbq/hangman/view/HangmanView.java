@@ -36,10 +36,14 @@ public class HangmanView {
     private static final String GAME_OVER_GALLOWS = " ______\n |    |\n |    O\n |   /|\\\n |   / \\\n_|___\nRIP 💀";
     private static final String CHOOSE_MODE = """
         Wähle den Spielmodus:
-        1) Eigenes Wort eingeben
+        1) Computer rät Modus
         2) Zufälliges Wort verwenden
         Bitte gib 1 oder 2 ein:""";
     private static final String INVALID_MODE = "Ungültige Eingabe! Bitte wähle 1 oder 2.";
+    private static final String COMPUTER_STARTS = "Der Computer versucht jetzt, dein Wort zu erraten...";
+    private static final String COMPUTER_GUESS = "Computer rät: ";
+    private static final String COMPUTER_WORD_GUESS = "Computer rät das Wort: ";
+    private static final String COMPUTER_WON = "Der Computer hat dein Wort erraten! Computer gewinnt!";
 
     /**
      * Displays the mode selection prompt.
@@ -143,6 +147,38 @@ public class HangmanView {
         int index = 10 - remainingLives;
         index = Math.min(Math.max(index, 0), GALLOWS_STATES.length - 1);
         System.out.println(GALLOWS_STATES[index]);
+    }
+
+    /**
+     * Shows that the computer starts guessing.
+     */
+    public void showComputerStartsGuessing() {
+        System.out.println(COMPUTER_STARTS);
+    }
+
+    /**
+     * Shows the computer's letter guess.
+     *
+     * @param letter The letter the computer is guessing
+     */
+    public void showComputerLetterGuess(char letter) {
+        System.out.println(COMPUTER_GUESS + letter);
+    }
+
+    /**
+     * Shows the computer's word guess.
+     *
+     * @param word The word the computer is guessing
+     */
+    public void showComputerWordGuess(String word) {
+        System.out.println(COMPUTER_WORD_GUESS + word);
+    }
+
+    /**
+     * Shows that the computer won the game.
+     */
+    public void showComputerWon() {
+        System.out.println(COMPUTER_WON);
     }
 }
 
